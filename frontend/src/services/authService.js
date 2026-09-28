@@ -1,10 +1,20 @@
 import api from './api.js';
 
 export const authService = {
-  async register(emailOrObj, password, name) {
-    const payload = typeof emailOrObj === 'object'
-      ? emailOrObj
-      : { email: emailOrObj, password, name };
+  async register(arg1, arg2, arg3) {
+    let payload = {};
+    if (typeof arg1 === 'object') {
+      payload = arg1;
+    } else if (typeof arg1 === 'string' && arg1.includes('@')) {
+      // (email, password, name)
+      payload = { email: arg1, password: arg2, name: arg3 || 'Student' };
+    } else if (typeof arg2 === 'string' && arg2.includes('@')) {
+      // (name, email, password)
+      payload = { name: arg1, email: arg2, password: arg3 };
+    } else {
+      payload = { name: arg1, email: arg2, password: arg3 };
+    }
+
     const res = await api.post('/auth/register', payload);
     const data = res.data?.data || res.data;
     if (data?.token) {
@@ -13,10 +23,14 @@ export const authService = {
     return data;
   },
 
-  async login(emailOrObj, password) {
-    const payload = typeof emailOrObj === 'object'
-      ? emailOrObj
-      : { email: emailOrObj, password };
+  async login(arg1, arg2) {
+    let payload = {};
+    if (typeof arg1 === 'object') {
+      payload = arg1;
+    } else {
+      payload = { email: arg1, password: arg2 };
+    }
+
     const res = await api.post('/auth/login', payload);
     const data = res.data?.data || res.data;
     if (data?.token) {

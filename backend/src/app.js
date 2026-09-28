@@ -9,17 +9,47 @@ import { config } from './config/env.js';
 
 const app = express();
 
-// 1. Security Headers
-app.use(helmet());
+// 1. Security Headers (configured to allow cross-origin requests)
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 
-// 2. Cross-Origin Resource Sharing (CORS)
-const corsOptions = {
-  origin: config.clientUrl || 'http://localhost:5173',
+// 2. Dynamic Cross-Origin Resource Sharing (CORS)
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'http://localhost:5001',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:3000',
+  'http://127.0.0.1:5001',
+  config.clientUrl
+].filter(Boolean);
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow non-browser requests (Postman, curl, server-to-server)
+    if (!origin) return callback(null, true);
+    
+    // Check allowed origins list
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    // Allow all Vercel and Render deployments (*.vercel.app, *.onrender.com)
+    if (origin.endsWith('.vercel.app') || origin.endsWith('.onrender.com') || origin.includes('localhost')) {
+      return callback(null, true);
+    }
+
+    // Fallback: Allow during development/hackathon deployment
+    return callback(null, true);
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-};
-app.use(cors(corsOptions));
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With']
+}));
+
+// Explicitly handle preflight OPTIONS for all routes
+app.options('*', cors());
 
 // 3. Request Logging & Body Parsing
 app.use(morgan('dev'));
@@ -29,12 +59,12 @@ app.use(express.urlencoded({ extended: true }));
 // 4. Rate Limiting (Protects API from brute force & abuse)
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 300, // Limit each IP to 300 requests per 15 minutes
+  max: 500, // Generous limit for dashboard interactions
   standardHeaders: true,
   legacyHeaders: false,
   message: {
     success: false,
-    message: 'Too many requests from this IP. Please try again after 15 minutes.'
+    message: 'Too many requests from this IP. Please try again after a few minutes.'
   }
 });
 app.use('/api', generalLimiter);

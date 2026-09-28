@@ -26,7 +26,7 @@ export const LoginPage = () => {
       await login(email, password);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.message || 'Invalid credentials. Please check your details.');
+      setError(err.userMessage || err.response?.data?.message || err.message || 'Invalid credentials. Please check your details.');
     } finally {
       setLoading(false);
     }
@@ -41,12 +41,12 @@ export const LoginPage = () => {
     try {
       await login(demoEmail, demoPass);
       navigate('/dashboard');
-    } catch (err) {
+    } catch {
       try {
-        await register('Alex Morgan', demoEmail, demoPass);
+        await register({ name: 'Alex Morgan', email: demoEmail, password: demoPass });
         navigate('/dashboard');
       } catch (regErr) {
-        setError(regErr.message || 'Failed to start demo session.');
+        setError(regErr.userMessage || regErr.response?.data?.message || regErr.message || 'Failed to start demo session.');
       }
     } finally {
       setLoading(false);

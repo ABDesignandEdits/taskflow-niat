@@ -24,15 +24,16 @@ export const AuthProvider = ({ children }) => {
 
   const checkAuth = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('token') || localStorage.getItem('taskflow_token');
       if (token) {
         const userData = await authService.getCurrentUser();
-        setUser(userData);
+        setUser(userData.user || userData);
         setIsAuthenticated(true);
       }
     } catch (error) {
       console.error('Auth check failed:', error);
       localStorage.removeItem('token');
+      localStorage.removeItem('taskflow_token');
     } finally {
       setLoading(false);
     }
@@ -40,29 +41,42 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     const response = await authService.login(email, password);
-    localStorage.setItem('token', response.token);
-    setUser(response.user);
+    const token = response.token;
+    if (token) {
+      localStorage.setItem('token', token);
+      localStorage.setItem('taskflow_token', token);
+    }
+    const userData = response.user || response;
+    setUser(userData);
     setIsAuthenticated(true);
-    navigate('/dashboard');
+    return response;
   };
 
-  const register = async (email, password, name) => {
-    const response = await authService.register(email, password, name);
-    localStorage.setItem('token', response.token);
-    setUser(response.user);
+  const register = async (arg1, arg2, arg3) => {
+    const response = await authService.register(arg1, arg2, arg3);
+    const token = response.token;
+    if (token) {
+      localStorage.setItem('token', token);
+      localStorage.setItem('taskflow_token', token);
+    }
+    const userData = response.user || response;
+    setUser(userData);
     setIsAuthenticated(true);
-    navigate('/dashboard');
+    return response;
   };
 
   const logout = () => {
+    authService.logout().catch(() => {});
     localStorage.removeItem('token');
+    localStorage.removeItem('taskflow_token');
+    localStorage.removeItem('taskflow_user');
     setUser(null);
     setIsAuthenticated(false);
     navigate('/login');
   };
 
   const updateUser = (updatedData) => {
-    setUser({ ...user, ...updatedData });
+    setUser((prev) => ({ ...prev, ...updatedData }));
   };
 
   const value = {

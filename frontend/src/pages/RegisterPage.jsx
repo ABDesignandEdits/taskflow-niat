@@ -29,10 +29,10 @@ export const RegisterPage = () => {
     setError('');
 
     try {
-      await register(name, email, password);
+      await register({ name, email, password });
       navigate('/dashboard');
     } catch (err) {
-      setError(err.message || 'Registration failed. Please try a different email.');
+      setError(err.userMessage || err.response?.data?.message || err.message || 'Registration failed. Please try a different email.');
     } finally {
       setLoading(false);
     }
