@@ -2,9 +2,15 @@
  * API Configuration
  *
  * Centralizes API base URL configuration.
- * Default points to the live deployed Render backend service.
+ * Normalizes user-supplied or default URLs with /api.
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://taskflow-niat.onrender.com/api';
+let rawUrl = import.meta.env.VITE_API_URL || 'https://taskflow-niat.onrender.com/api';
+
+// Clean whitespace and trailing slashes
+rawUrl = rawUrl.trim().replace(/\/+$/, '');
+
+// If URL does not end with /api, append /api
+const API_BASE_URL = rawUrl.endsWith('/api') ? rawUrl : `${rawUrl}/api`;
 
 export default API_BASE_URL;

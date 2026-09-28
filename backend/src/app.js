@@ -70,23 +70,6 @@ const generalLimiter = rateLimit({
 app.use('/api', generalLimiter);
 
 // 5. Root & Health Check Endpoints
-app.get('/', (req, res) => {
-  res.json({
-    name: 'TaskFlow API',
-    version: '1.0.0',
-    description: 'Teenager To-Do & Productivity Tracker Backend REST API',
-    documentation: '/api/health',
-    endpoints: {
-      auth: '/api/auth',
-      tasks: '/api/tasks',
-      categories: '/api/categories',
-      goals: '/api/goals',
-      analytics: '/api/analytics/overview',
-      user: '/api/user'
-    }
-  });
-});
-
 app.get('/health', (req, res) => {
   res.json({
     success: true,
@@ -95,8 +78,18 @@ app.get('/health', (req, res) => {
   });
 });
 
-// 6. Mount API Routes
+app.get('/api/health', (req, res) => {
+  res.json({
+    success: true,
+    message: 'TaskFlow API is running smoothly 🚀',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// 6. Mount API Routes under both /api and root /
+// This guarantees that BOTH /api/auth/register and /auth/register work without 404
 app.use('/api', routes);
+app.use('/', routes);
 
 // 7. Error Handling Middleware
 app.use(notFoundHandler);
